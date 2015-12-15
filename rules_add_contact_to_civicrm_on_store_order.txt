@@ -1,0 +1,60 @@
+{ "rules_add_contact_to_civicrm_on_store_order" : {
+    "LABEL" : "Add contact info to CiviCRM on store order",
+    "PLUGIN" : "reaction rule",
+    "OWNER" : "rules",
+    "REQUIRES" : [ "commerce_order", "rules", "commerce_checkout" ],
+    "ON" : { "commerce_checkout_complete" : [] },
+    "IF" : [
+      { "commerce_order_contains_product_type" : {
+          "commerce_order" : [ "commerce_order" ],
+          "product_type" : { "value" : {
+              "donation" : "donation",
+              "product" : "product",
+              "rooms_product" : "rooms_product"
+            }
+          },
+          "operator" : "\u003E=",
+          "value" : "1"
+        }
+      },
+      { "data_is" : {
+          "data" : [ "site:current-cart-order:commerce-line-items" ],
+          "value" : [ "commerce-order:commerce-line-items" ]
+        }
+      }
+    ],
+    "DO" : [
+      { "entity_fetch" : {
+          "USING" : {
+            "type" : "civicrm_contact",
+            "id" : [ "commerce-order:owner:civicrm-contact:id" ]
+          },
+          "PROVIDE" : { "entity_fetched" : { "civi_contact" : "Civi Contact" } }
+        }
+      },
+      { "entity_fetch" : {
+          "USING" : { "type" : "user", "id" : [ "site:current-cart-order:uid" ] },
+          "PROVIDE" : { "entity_fetched" : { "drupal_user" : "Drupal user" } }
+        }
+      },
+      { "entity_fetch" : {
+          "USING" : {
+            "type" : "commerce_customer_profile",
+            "id" : [ "site:current-cart-order:uid" ]
+          },
+          "PROVIDE" : { "entity_fetched" : { "customer" : "Customer profile" } }
+        }
+      },
+      { "data_set" : {
+          "data" : [ "civi-contact:first-name" ],
+          "value" : "[customer:commerce-customer-address:first_name]"
+        }
+      },
+      { "data_set" : {
+          "data" : [ "civi-contact:last-name" ],
+          "value" : "[customer:commerce-customer-address:last_name]"
+        }
+      }
+    ]
+  }
+}
